@@ -32,6 +32,11 @@ class ParseShowData: NSObject {
     return false
   }
   
+  func episodeWasJustPushedToParse(episode: PFObject ,seasonIndex: Int, episodeIndex: Int) {
+    let key = dictKey(seasonIndex, episode: episodeIndex)
+    collection[key] = episode
+  }
+  
   private func dictKey(season: Int, episode: Int) -> String {
     return "\(season)_\(episode)"
   }
@@ -61,7 +66,7 @@ class ParseManager: NSObject {
     return PFUser.currentUser()
   }
   
-  func markEpisode(episodeInfo: Episode, basicInfo: BasicInfo) {
+  func markEpisode(episodeInfo: Episode, basicInfo: BasicInfo, handler: PFObjectResultBlock?) {
     if let user = user {
       var query = PFQuery(className:showClassName)
       query.whereKey(userKey, equalTo:user)
@@ -107,6 +112,7 @@ class ParseManager: NSObject {
             episode.setObject(true, forKey: self.watchedKey)
             
             episode.saveInBackgroundWithBlock(nil)
+            handler?(episode, nil)
           }
         })
       }

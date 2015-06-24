@@ -44,10 +44,9 @@ class BaseDetailsViewController: BarHidingViewController, VDLPlaybackViewControl
     // Harmless object, calling it's methods when not connected to Parse does nothing / returns default values
     var parseData: ParseShowData?
   
-  
     var item: BasicInfo! {
         didSet {
-            reloadShowInfoFromParse()
+            loadShowInfoFromParse()
             navigationItem.title = item.title
             reloadData()
         }
@@ -92,7 +91,7 @@ class BaseDetailsViewController: BarHidingViewController, VDLPlaybackViewControl
     }
   
     // MARK: - Parse
-    func reloadShowInfoFromParse() {
+    func loadShowInfoFromParse() {
       ParseManager.sharedInstance.parseEpisodesData(item, handler: { (parseShowData) -> Void in
         self.parseData = parseShowData
         self.reloadData()
@@ -119,8 +118,12 @@ class BaseDetailsViewController: BarHidingViewController, VDLPlaybackViewControl
     func startPlayback(episode: Episode, basicInfo: BasicInfo, magnetLink: String, loadingTitle: String) {
       
         // Mark on Parse
-        ParseManager.sharedInstance.markEpisode(episode, basicInfo: basicInfo)
-        reloadShowInfoFromParse()
+        ParseManager.sharedInstance.markEpisode(episode, basicInfo: basicInfo) { (markedEpisode, error) -> Void in
+          if let parseData = self.parseData, ep = markedEpisode {
+            parseData.episodeWasJustPushedToParse(ep, seasonIndex: Int(episode.seasonNumber), episodeIndex: Int(episode.episodeNumber))//.rse(episode)
+            self.reloadData()
+          }
+        }
       
         let loadingVC = self.storyboard?.instantiateViewControllerWithIdentifier("loadingViewController") as! LoadingViewController
         loadingVC.delegate = self
